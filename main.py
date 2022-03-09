@@ -1,12 +1,21 @@
 import random, time
-from tkinter import CURRENT
 import tcod, tcod.event
 
-GAMESTATE = 0
+GAMESTATE = 2
 WIDTH, HEIGHT = 30, 17
 SCORE = 1
-DIFFICULTY = (0.1)
+EASY = 3
+MEDIUM = 1
+HARD = 0.4
+dfl = [EASY,MEDIUM,HARD]
+diffstate = 1
+DIFFICULTY = (0.1) * dfl[diffstate]
 foodlist = []
+difflist = [
+    'EASY',
+    'MEDIUM',
+    'HARD'
+]
 currentfood = (random.randint(1, WIDTH-3), random.randint(1, HEIGHT-3))
 
 
@@ -85,7 +94,8 @@ def main() -> None:
     activetiles.append(firsttile)
     tileset = tcod.tileset.load_tilesheet("MANNfont10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD)
     root_console = tcod.Console(WIDTH, HEIGHT, order="F")
-    with tcod.context.new(columns=WIDTH, rows=HEIGHT, tileset=tileset) as context:
+    print('Difficulty set to: ' + str(DIFFICULTY))
+    with tcod.context.new(columns=WIDTH, rows=HEIGHT, tileset=tileset, title='Snake by JMANN') as context:
         while True:
 
             root_console.clear()
@@ -216,11 +226,14 @@ def main() -> None:
 def gameover() -> None:
     global GAMESTATE
     global SCORE
+    global diffstate
+    global DIFFICULTY
     tileset = tcod.tileset.load_tilesheet("MANNfont10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD)
     go_console = tcod.Console(WIDTH, HEIGHT, order="F")
-    with tcod.context.new(columns=WIDTH, rows=HEIGHT, tileset=tileset) as context:
+    with tcod.context.new(columns=WIDTH, rows=HEIGHT, tileset=tileset, title='Snake by JMANN') as context:
         while True:
             go_console.clear()
+            go_console.print(x=1,y=int((HEIGHT/2)-6),string='# Difficulty: ' + str(difflist[diffstate]))
             go_console.print(x=1,y=int((HEIGHT/2)-4),string='# Score: ' + str(SCORE))
             go_console.print(x=1,y=int((HEIGHT/2)),string='# Press SPACE to PLAY AGAIN')
             go_console.print(x=1,y=int((HEIGHT/2)+2),string='# Press ESC to QUIT')
@@ -237,10 +250,59 @@ def gameover() -> None:
                 if isinstance(event, tcod.event.KeyDown):
                     if str(event.sym) == 'KeySym.ESCAPE':
                         raise SystemExit()
-                        
+                if isinstance(event, tcod.event.KeyDown):
+                    if str(event.sym) == 'KeySym.LEFT':
+                        if diffstate > 0:
+                            diffstate -= 1
+                            DIFFICULTY = (0.1) * dfl[diffstate]
+
+                if isinstance(event, tcod.event.KeyDown):
+                    if str(event.sym) == 'KeySym.RIGHT':
+                        if diffstate < 2:
+                            diffstate += 1 
+                            DIFFICULTY = (0.1) * dfl[diffstate]
+
+
+def start() -> None:
+    global diffstate
+    global GAMESTATE
+    global DIFFICULTY
+    tileset = tcod.tileset.load_tilesheet("MANNfont10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD)
+    st_console = tcod.Console(WIDTH, HEIGHT, order="F")
+    with tcod.context.new(columns=WIDTH, rows=HEIGHT, tileset=tileset, title='Snake by JMANN') as context:
+        while True:
+            
+            st_console.clear()
+            draw_border(0, 0, WIDTH, HEIGHT, st_console)
+            st_console.print(x=1,y=int((HEIGHT/2)-6),string='# Change Difficulty: ' + str(difflist[diffstate]))
+            st_console.print(x=1,y=int((HEIGHT/2)),string='# Press SPACE to PLAY')
+            context.present(console=st_console)
+            
+            for event in tcod.event.get():
+                if isinstance(event, tcod.event.Quit):
+                    raise SystemExit()
+                if isinstance(event, tcod.event.KeyDown):
+                    if str(event.sym) == 'KeySym.SPACE':
+                        GAMESTATE = 0
+                        return
+                if isinstance(event, tcod.event.KeyDown):
+                    if str(event.sym) == 'KeySym.ESCAPE':
+                        raise SystemExit()     
+                if isinstance(event, tcod.event.KeyDown):
+                    if str(event.sym) == 'KeySym.LEFT':
+                        if diffstate > 0:
+                            diffstate -= 1
+                            DIFFICULTY = (0.1) * dfl[diffstate]
+                if isinstance(event, tcod.event.KeyDown):
+                    if str(event.sym) == 'KeySym.RIGHT':
+                        if diffstate < 2:
+                            diffstate += 1
+                            DIFFICULTY = (0.1) * dfl[diffstate] 
 
 while True:
     if GAMESTATE == 0:
         main()
     if GAMESTATE == 1:
         gameover()
+    if GAMESTATE == 2:
+        start()

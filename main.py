@@ -2,6 +2,7 @@ import random, time
 from tkinter import CURRENT
 import tcod, tcod.event
 
+GAMESTATE = 0
 WIDTH, HEIGHT = 30, 17
 SCORE = 1
 DIFFICULTY = (0.1)
@@ -75,6 +76,7 @@ def draw_border(x=0, y=0, width=WIDTH, height=HEIGHT, console = tcod.Console(WID
 
 
 def main() -> None:
+    global GAMESTATE
     activetiles = []
     player = Snake(1,0,'right')
     create_food(activetiles, player) #temp food create
@@ -110,16 +112,20 @@ def main() -> None:
             # is player out of bounds?
             if player.x < 0:
                 print('Player X is less than 0.')
-                raise SystemExit()
+                GAMESTATE = 1
+                return
             if player.y < 0:
                 print('Player Y is less than 0.')
-                raise SystemExit()
-            if player.x > WIDTH:
+                GAMESTATE = 1
+                return
+            if player.x > WIDTH - 3:
                 print('Player X is greater than WIDTH.')
-                raise SystemExit()
-            if player.y > HEIGHT:
+                GAMESTATE = 1
+                return
+            if player.y > HEIGHT - 3:
                 print('Player Y is greater than HEIGHT.')
-                raise SystemExit()
+                GAMESTATE = 1
+                return
 
             # is player inside of player?
             for i in range(len(activetiles)):
@@ -128,7 +134,8 @@ def main() -> None:
                 if player.x == xact:
                     if player.y == yact:
                         print('Player and tail exist together.')
-                        raise SystemExit()
+                        GAMESTATE = 1
+                        return
             
             activetiles.append(newmove)
             
@@ -144,10 +151,18 @@ def main() -> None:
                 if activetiles[i].age > 0:
                     templist.append(activetiles[i])
                 if activetiles[i].age < 1:
-                    gameboard[activetiles[i].x][activetiles[i].y] = 0
+                    try:
+                        gameboard[activetiles[i].x][activetiles[i].y] = 0
+                    except:
+                        print('Error out of bound.')
+                        continue
             activetiles = templist          
             for i in range(len(activetiles)):
-                gameboard[activetiles[i].x][activetiles[i].y] = 1
+                try:
+                    gameboard[activetiles[i].x][activetiles[i].y] = 1
+                except:
+                    print('Error out of bound.')
+                    continue
                 activetiles[i].age -= 1
 
 
@@ -194,7 +209,38 @@ def main() -> None:
                         else:
                             player.direction = 'down'
                         print(player.direction)
+                    elif isinstance(event, tcod.event.KeyDown):
+                        if str(event.sym) == 'KeySym.ESCAPE':
+                            raise SystemExit()
+        
+def gameover() -> None:
+    global GAMESTATE
+    global SCORE
+    tileset = tcod.tileset.load_tilesheet("MANNfont10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD)
+    go_console = tcod.Console(WIDTH, HEIGHT, order="F")
+    with tcod.context.new(columns=WIDTH, rows=HEIGHT, tileset=tileset) as context:
+        while True:
+            go_console.clear()
+            go_console.print(x=1,y=int((HEIGHT/2)-4),string='# Score: ' + str(SCORE))
+            go_console.print(x=1,y=int((HEIGHT/2)),string='# Press SPACE to PLAY AGAIN')
+            go_console.print(x=1,y=int((HEIGHT/2)+2),string='# Press ESC to QUIT')
+            draw_border(0, 0, WIDTH, HEIGHT, go_console)
 
+            context.present(console=go_console)
+            for event in tcod.event.get():
+                if isinstance(event, tcod.event.Quit):
+                    raise SystemExit()
+                if isinstance(event, tcod.event.KeyDown):
+                    if str(event.sym) == 'KeySym.SPACE':
+                        GAMESTATE = 0
+                        return
+                if isinstance(event, tcod.event.KeyDown):
+                    if str(event.sym) == 'KeySym.ESCAPE':
+                        raise SystemExit()
+                        
 
-if __name__ == "__main__":
-    main()
+while True:
+    if GAMESTATE == 0:
+        main()
+    if GAMESTATE == 1:
+        gameover()

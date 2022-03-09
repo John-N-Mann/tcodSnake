@@ -86,6 +86,8 @@ def draw_border(x=0, y=0, width=WIDTH, height=HEIGHT, console = tcod.Console(WID
 
 def main() -> None:
     global GAMESTATE
+    global SCORE
+    SCORE = 1
     activetiles = []
     player = Snake(1,0,'right')
     create_food(activetiles, player) #temp food create
